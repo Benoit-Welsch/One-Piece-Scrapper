@@ -45,7 +45,7 @@ const extractUrl = (url) => {
 // Get id
 const ddl = (url) => {
   url = extractUrl(url);
-
+  let name = url.path.split('/')[3] + ".mp4";
   const req = https.request({
     hostname: url.hostname,
     port: 443,
@@ -79,7 +79,7 @@ const ddl = (url) => {
           apiResponse = JSON.parse(apiResponse);
           let url = apiResponse.data[1].file || apiResponse.data[0].file
             // Download file
-          start(url, 'coucou.mp4', './output/');
+          start(url, name, './output/');
         });
 
         res.on("error", function(error) {
@@ -123,6 +123,7 @@ const start = (url, name, dir) => {
   request.on('response', function(data) {
     totalSize = data.headers['content-length']
   });
+  request.end()
 }
 
 module.exports = ddl;
