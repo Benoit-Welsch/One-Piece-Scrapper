@@ -1,0 +1,16 @@
+{
+  "name": "stream-vf.co_scrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app/app.j",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx nodemon src/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cli-progress": "^3.9.0",
+    "follow-redirects": "^1.13.3"
+  }
+}
