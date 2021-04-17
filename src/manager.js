@@ -35,7 +35,12 @@ class Manager {
 
     let promise = [];
 
-    console.log('Download in progress ... \n')
+    if (start == 0) {
+      console.log('Total episode          :  ' + this.episodes.length);
+      console.log('Simultaneous download  :  ' + this.simultaneousDl);
+      console.log();
+      console.log('Download in progress ...');
+    }
 
     // Start download of a range of episode 
     for (let index = start; index < stop; index++) {
