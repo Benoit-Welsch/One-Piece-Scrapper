@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { join, resolve } = require('path');
+const { join } = require('path');
 const axios = require('axios');
 
 // Api url used to get download link
@@ -73,7 +73,7 @@ class Episode {
    * Download episode and save it inside path
    * @param  {string} path Output path of the episode
    */
-  async ddl(path) {
+  async ddl(path, multibar = null) {
     // If no ddlUrl wait for it
     if (!this.ddlUrl) await this.getDdlLink();
 
@@ -81,7 +81,6 @@ class Episode {
     let file = fs.createWriteStream(join(path, this.name) + "." + this.format);
 
     // Start download
-
     let req = new Promise((resolve, reject) => {
       axios
         .get(this.ddlUrl, {
@@ -89,10 +88,29 @@ class Episode {
           responseType: 'stream',
         })
         .then(res => {
+          // Write file
           res.data.pipe(file);
+
+          if (multibar) {
+            // Create progress bar
+            this.lenght = res.headers['content-length'];
+            this.currentSize = 0;
+            const bar = multibar.create(this.lenght, this.currentSize, { file: this.name });
+
+            // Update progress bar
+            res.data.on('data', (chunk) => {
+              this.currentSize += chunk.length;
+              if (bar) {
+                bar.update(this.currentSize, { file: this.name })
+              }
+            })
+          }
+
+          // Done
           res.data.on('end', () => {
-            resolve()
-          })
+              resolve()
+            })
+            // Error
           res.data.on('error', () => {
             reject()
           })

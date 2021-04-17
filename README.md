@@ -2,20 +2,24 @@
 A application to download file from https://www.stream-vf.co/
 
 # How to use 
-Download one-piece episode from 390 to 399
+Download one-piece episode from 470 to 481
 ```javascript
-const ddl = require("./ddl");
+const Episode = require('./episode');
+const Manager = require('./manager');
 
-for (let i = 0; i < 10; i++) {
-  let url = "https://www.stream-vf.co/anime/one-piece-vostfr/episode-" + (390 + i)
-  ddl(url)
+const manager = new Manager();
+
+for (let i = 0; i < 12; i++) {
+  manager.push(new Episode("https://www.stream-vf.co/anime/one-piece-vostfr/episode-" + (470 + i)));
+  //episode.ddl('./output/');
 }
+
+manager.download();
 ```
 
 # Console preview
-![image](https://user-images.githubusercontent.com/56845767/115087642-cea1c980-9f0e-11eb-8b7d-e6a87907330d.png)
+![image](https://user-images.githubusercontent.com/56845767/115112963-29c3d280-9f88-11eb-9c22-bc6409cc5992.png)
 
 # To Do
-- Scrap name and episode number from url
 - Prevent rewrite
 - Handle Error
