@@ -76,10 +76,16 @@ const ddl = (url) => {
         });
 
         res.on("end", () => {
-          apiResponse = JSON.parse(apiResponse);
-          let url = apiResponse.data[1].file || apiResponse.data[0].file
+          try {
+            apiResponse = JSON.parse(apiResponse);
+            let url = apiResponse.data[1].file || apiResponse.data[0].file;
             // Download file
-          start(url, name, './output/');
+            start(url, name, './output/');
+          } catch (err) {
+            console.log(err)
+            console.log(apiResponse)
+          }
+
         });
 
         res.on("error", function(error) {
