@@ -1,3 +1,6 @@
+const fs = require('fs');
+const { resolve } = require('path');
+
 const Episode = require("./episode");
 const { MultiBar } = require('cli-progress');
 const _colors = require('colors');
@@ -14,6 +17,8 @@ class Manager {
     this.episodes = episodes;
     this.simultaneousDl = simultaneousDl;
     this.path = path;
+
+    if (!fs.existsSync(path)) throw new Error('⚠️  Folder doesn\'t exist -> not downloaded (' + resolve(path) + ')')
 
     // Progress bar
     this.multibar = new MultiBar({

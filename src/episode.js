@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { join } = require('path');
+const { join, resolve } = require('path');
 const axios = require('axios');
 const { MultiBar } = require('cli-progress');
 
@@ -100,6 +100,9 @@ class Episode {
 
     // If no ddlUrl wait for it
     if (!this.ddlUrl) await this.getDdlLink();
+
+    // Check output path
+    if (!fs.existsSync(path)) throw new Error('⚠️  Folder doesn\'t exist -> not downloaded (' + resolve(path) + ')')
 
     // Create file if doesn't exist
     let fileName = join(path, this.name) + "." + this.format;
