@@ -5,11 +5,11 @@ const _colors = require('colors');
 class Manager {
 
   /**
-   * @param  {Array<Episode>} episode Array of episode you want to download
    * @param  {Number} simultaneousDl Maximum number of simultaneous downloads
    * @param  {string} path Output path of episodes
+   * @param  {Array<Episode>} episode Array of episode you want to download
    */
-  constructor(episodes = [], simultaneousDl = 5, path = "./output/") {
+  constructor(simultaneousDl = 5, path = "./output/", episodes = []) {
     this.bar = [];
     this.episodes = episodes;
     this.simultaneousDl = simultaneousDl;
@@ -26,7 +26,7 @@ class Manager {
     });
   }
 
-  push(episode) {
+  add(episode) {
     this.episodes.push(episode);
   }
 
