@@ -21,5 +21,4 @@ manager.download();
 ![image](https://user-images.githubusercontent.com/56845767/115113659-ab692f80-9f8b-11eb-8d1f-fba1622e1e66.png)
 
 # To Do
-- Prevent rewrite
-- Handle Error
+ - Support the entire web site

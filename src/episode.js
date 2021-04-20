@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { join } = require('path');
 const axios = require('axios');
+const { MultiBar } = require('cli-progress');
 
 // Api url used to get download link
 const APIURL = "https://stream-vf.xyz/api/source/";
@@ -22,10 +23,28 @@ class Episode {
    */
 
   constructor(url) {
+    // Episode Url
     this.url = url
+
+    // Get name from url
     let splitedUrl = url.split('/');
     this.name = splitedUrl[4].splitAndCaps() + " " + splitedUrl[5].splitAndCaps();
+
+    // All promise made by this episode
     this.requests = [];
+
+    // Current state of episode 
+    this.state = {
+      downloading: false,
+      done: false,
+    }
+  }
+
+  /**
+   * Return true if episode not downloaded and not started
+   */
+  isReady() {
+    return !this.state.downloading && !this.state.done;
   }
 
   /**
@@ -61,6 +80,7 @@ class Episode {
       .then(res => {
         let body = res.data;
         this.ddlUrl = body.data[1].file || body.data[0].file;
+        this.ddlUrl = this.ddlUrl.replace("https", "http");
         this.resolution = body.data[1].label || body.data[0].label;
         this.format = body.data[1].type || body.data[0].type;
       })
@@ -72,20 +92,26 @@ class Episode {
   /**
    * Download episode and save it inside path
    * @param  {string} path Output path of the episode
+   * @param  {MultiBar} multibar Multibar instance to show progress
    */
   async ddl(path, multibar = null) {
+    // Update status
+    this.state.downloading = true;
+
     // If no ddlUrl wait for it
     if (!this.ddlUrl) await this.getDdlLink();
 
-    // Create file
-    let file = fs.createWriteStream(join(path, this.name) + "." + this.format);
+    // Create file if doesn't exist
+    let fileName = join(path, this.name) + "." + this.format;
+    if (fs.existsSync(fileName)) throw new Error('⚠️  File already exist -> not downloaded (' + this.name + ')')
+    let file = fs.createWriteStream(fileName);
 
     // Start download
     let req = new Promise((resolve, reject) => {
       axios
         .get(this.ddlUrl, {
           method: 'GET',
-          responseType: 'stream',
+          responseType: 'stream'
         })
         .then(res => {
           // Write file
@@ -108,7 +134,9 @@ class Episode {
 
           // Done
           res.data.on('end', () => {
-              resolve()
+              this.state.downloading = false;
+              this.state.done = true;
+              resolve(this)
             })
             // Error
           res.data.on('error', () => {
@@ -120,6 +148,37 @@ class Episode {
     return req;
   }
 
+  simulate(path, multibar) {
+    this.state.downloading = true;
+    let max = 10;
+    let value = 0;
+
+    let done = () => {
+      this.state.done = true;
+    }
+
+    const bar = multibar.create(max, value, { file: this.name });
+    var name = this.name;
+    return new Promise((resolve, reject) => {
+      var timer = setInterval(function() {
+        // increment value
+        value++;
+
+        // update the bar value
+        bar.update(value, { file: name })
+
+        // set limit
+        if (value >= bar.getTotal()) {
+          // stop timer
+          clearInterval(timer);
+          done()
+          bar.stop();
+          resolve()
+        }
+      }, 500 * Math.random());
+
+    })
+  }
 }
 
 module.exports = Episode;

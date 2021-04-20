@@ -1,5 +1,5 @@
 const Episode = require("./episode");
-const cliProgress = require('cli-progress');
+const { MultiBar } = require('cli-progress');
 const _colors = require('colors');
 
 class Manager {
@@ -16,49 +16,73 @@ class Manager {
     this.path = path;
 
     // Progress bar
-    this.multibar = new cliProgress.MultiBar({
+    this.multibar = new MultiBar({
       clearOnComplete: false,
       hideCursor: true,
       format: _colors.cyan('{bar}') + '| {percentage}% || {file}',
       barCompleteChar: '\u2588',
       barIncompleteChar: '\u2591',
-      hideCursor: true
+      hideCursor: true,
+      stopOnComplete: true,
     });
   }
 
   add(episode) {
-    this.episodes.push(episode);
+    if (this.episodes.find(epi => epi.url === episode.url)) console.log('⚠️  Duplicated episode -> not added (' + episode.name + ')')
+    else this.episodes.push(episode);
   }
 
-  download(start = 0, stop = this.simultaneousDl) {
+  list() {
+    this.episodes.forEach(episode => {
+      console.log(episode.name)
+    });
+  }
+
+  download() {
     if (this.episodes.length == 0) return
 
-    let promise = [];
+    let
+      start = 0,
+      stop = this.simultaneousDl,
+      promise = [];
 
-    if (start == 0) {
-      console.log('Total episode          :  ' + this.episodes.length);
-      console.log('Simultaneous download  :  ' + this.simultaneousDl);
-      console.log();
-      console.log('Download in progress ...');
+    console.log('Total episode          :  ' + this.episodes.length);
+    console.log('Simultaneous download  :  ' + this.simultaneousDl);
+    console.log();
+    console.log('Download in progress ...');
+
+    const ddlNextEpisode = () => {
+      // Find the next episode to download 
+      let episode = this.episodes.find(episode => episode.isReady());
+      if (episode) {
+
+        let ddl = episode.ddl(this.path, this.multibar)
+          .then(() => {
+            ddlNextEpisode();
+          })
+          .catch(err => {
+            console.log(err.message)
+          })
+
+        promise.push(ddl)
+      }
     }
 
     // Start download of a range of episode 
     for (let index = start; index < stop; index++) {
       //this.promise.push(this.episodes[index].start);
-      promise.push(this.episodes[index].ddl(this.path, this.multibar))
-    }
 
-    // When all download from the range done, start next download
-    Promise.all(promise).then((resolve, reject) => {
-      if (stop != this.episodes.length) {
-        start += this.simultaneousDl;
-        // If stop index is bigger than the array set stop index to size of array
-        let stop = start + this.simultaneousDl > this.episodes.length ? this.episodes.length : start + this.simultaneousDl;
-        this.download(start, stop);
-      } else {
-        this.multibar.stop();
-      }
-    })
+      let ddl = this.episodes[index]
+        .ddl(this.path, this.multibar)
+        .then(() => {
+          ddlNextEpisode()
+        })
+        .catch((err) => {
+          console.log(err.message)
+        })
+      promise.push(ddl)
+
+    }
   }
 }
 
