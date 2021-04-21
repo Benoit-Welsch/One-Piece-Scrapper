@@ -43,19 +43,24 @@ class Manager {
     });
   }
 
-  download() {
-    if (this.episodes.length == 0) return
-    this.simultaneousDl = this.episodes.length < this.simultaneousDl ? this.episodes.length : this.simultaneousDl;
-
-    let
-      start = 0,
-      stop = this.simultaneousDl,
-      promise = [];
-
+  showData() {
     console.log('Total episode          :  ' + this.episodes.length);
     console.log('Simultaneous download  :  ' + this.simultaneousDl);
     console.log();
     console.log('Download in progress ...');
+  }
+
+  download() {
+    if (this.episodes.length == 0) return
+
+    let start = 0;
+    let stop = this.episodes.length < this.simultaneousDl ? this.episodes.length : this.simultaneousDl;
+    let promise = [];
+
+    this.showData()
+
+    // Global progress bar
+    const bar = this.multibar.create(this.episodes.length, 0, { file: 'Total' })
 
     const ddlNextEpisode = () => {
       // Find the next episode to download 
@@ -63,11 +68,12 @@ class Manager {
       if (episode) {
 
         let ddl = episode.ddl(this.path, this.multibar)
-          .then(() => {
-            ddlNextEpisode();
-          })
           .catch(err => {
             console.log(err.message)
+          })
+          .finally(() => {
+            bar.increment();
+            ddlNextEpisode()
           })
 
         promise.push(ddl)
@@ -76,48 +82,34 @@ class Manager {
 
     // Start download of a range of episode 
     for (let index = start; index < stop; index++) {
-      //this.promise.push(this.episodes[index].start);
-
-      let ddl = this.episodes[index]
-        .ddl(this.path, this.multibar)
-        .then(() => {
-          ddlNextEpisode()
-        })
-        .catch((err) => {
-          console.log(err.message)
-        })
-      promise.push(ddl)
-
+      ddlNextEpisode()
     }
   }
 
   simulate() {
     if (this.episodes.length == 0) return
-    this.simultaneousDl = this.episodes.length < this.simultaneousDl ? this.episodes.length : this.simultaneousDl;
 
-    console.log('test')
+    let start = 0;
+    let stop = this.episodes.length < this.simultaneousDl ? this.episodes.length : this.simultaneousDl;
+    let promise = [];
 
-    let
-      start = 0,
-      stop = this.simultaneousDl,
-      promise = [];
+    this.showData()
 
-    console.log('Total episode          :  ' + this.episodes.length);
-    console.log('Simultaneous download  :  ' + this.simultaneousDl);
-    console.log();
-    console.log('Download in progress ...');
+    // Global progress bar
+    const bar = this.multibar.create(this.episodes.length, 0, { file: 'Total' })
 
     const ddlNextEpisode = () => {
       // Find the next episode to download 
       let episode = this.episodes.find(episode => episode.isReady());
       if (episode) {
 
-        let ddl = episode.simulate(this.path, this.multibar)
-          .then(() => {
-            ddlNextEpisode();
-          })
+        let ddl = episode.simulate(this.multibar)
           .catch(err => {
             console.log(err.message)
+          })
+          .finally(() => {
+            bar.increment();
+            ddlNextEpisode()
           })
 
         promise.push(ddl)
@@ -126,19 +118,7 @@ class Manager {
 
     // Start download of a range of episode 
     for (let index = start; index < stop; index++) {
-      //this.promise.push(this.episodes[index].start);
-
-      let ddl = this.episodes[index]
-        .simulate(this.path, this.multibar)
-        .then(() => {
-          ddlNextEpisode()
-        })
-        .catch((err) => {
-          console.log(err.message)
-        })
-      promise.push(ddl)
-
-
+      ddlNextEpisode()
     }
   }
 }

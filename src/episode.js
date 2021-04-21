@@ -37,6 +37,7 @@ class Episode {
     this.state = {
       downloading: false,
       done: false,
+      error: [],
     }
   }
 
@@ -44,7 +45,7 @@ class Episode {
    * Return true if episode not downloaded and not started
    */
   isReady() {
-    return !this.state.downloading && !this.state.done;
+    return !this.state.downloading && !this.state.done && this.state.error.lenght != -1;
   }
 
   /**
@@ -62,7 +63,9 @@ class Episode {
         let text = Buffer.from(script, 'base64').toString();
         // Get id from src of iframe
         if (text.indexOf(tagIdStart) == -1 || text.indexOf(tagIdStop) == -1) {
-          throw new Error('⚠️  Invalid Url provided')
+          let err = new Error('⚠️  Invalid Url provided')
+          this.state.error.push(err)
+          throw err;
         }
         this.id = text.substring(text.indexOf(tagIdStart) + tagIdStart.length, text.indexOf(tagIdStop));
       })
@@ -136,6 +139,9 @@ class Episode {
                 bar.update(this.currentSize, { file: this.name })
               }
             })
+            res.data.on('end', () => {
+              multibar.remove(bar);
+            })
           }
 
           // Done
@@ -145,8 +151,8 @@ class Episode {
               resolve(this)
             })
             // Error
-          res.data.on('error', () => {
-            reject()
+          res.data.on('error', (err) => {
+            reject(err)
           })
         })
     })
@@ -154,7 +160,7 @@ class Episode {
     return req;
   }
 
-  simulate(path, multibar) {
+  simulate(multibar, time = 500) {
     this.state.downloading = true;
     let max = 10;
     let value = 0;
@@ -178,10 +184,12 @@ class Episode {
           // stop timer
           clearInterval(timer);
           done()
-          bar.stop();
+          if (multibar) {
+            multibar.remove(bar);
+          }
           resolve()
         }
-      }, 500 * Math.random());
+      }, time * Math.random());
 
     })
   }
