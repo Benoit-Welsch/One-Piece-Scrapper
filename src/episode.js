@@ -61,6 +61,9 @@ class Episode {
         // Script is base64 -> convert to string
         let text = Buffer.from(script, 'base64').toString();
         // Get id from src of iframe
+        if (text.indexOf(tagIdStart) || text.indexOf(tagIdStop)) {
+          throw new Error('⚠️  Invalid Url provided')
+        }
         this.id = text.substring(text.indexOf(tagIdStart) + tagIdStart.length, text.indexOf(tagIdStop));
       })
     this.requests.push(req);
